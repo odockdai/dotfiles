@@ -1,16 +1,29 @@
 return {
-  "rmagatti/auto-session",
-  config = function()
-    local auto_session = require("auto-session")
+	"rmagatti/auto-session",
 
-    auto_session.setup({
-      auto_restore_enabled = false,
-      auto_session_suppress_dirs = { "~/", "~/Dev/", "~/Downloads", "~/Documents", "~/Desktop/" },
-    })
+	-- Pastikan sessionoptions sudah memasukkan 'localoptions' sebelum plugin dipanggil
+	init = function()
+		vim.opt.sessionoptions:append("localoptions")
+	end,
 
-    local keymap = vim.keymap
+	config = function()
+		local auto_session = require("auto-session")
 
-    keymap.set("n", "<leader>wr", "<cmd>SessionRestore<CR>", { desc = "Restore session for cwd" }) -- restore last workspace session for current directory
-    keymap.set("n", "<leader>ws", "<cmd>SessionSave<CR>", { desc = "Save session for auto session root dir" }) -- save workspace session for current working directory
-  end,
+		auto_session.setup({
+			-- ganti nama opsi lama -> baru
+			auto_restore = false,
+			suppressed_dirs = { "~/", "~/Dev/", "~/Downloads", "~/Documents", "~/Desktop/" },
+
+			-- opsional: matikan command legacy "Session*"/"Autosession"
+			-- legacy_cmds = false,
+		})
+
+		local keymap = vim.keymap
+		-- Migrasi keymap ke command baru
+		keymap.set("n", "<leader>wr", "<cmd>AutoSession restore<CR>", { desc = "Restore session for cwd" })
+		keymap.set("n", "<leader>ws", "<cmd>AutoSession save<CR>", { desc = "Save session for cwd" })
+		-- opsional enak:
+		-- keymap.set("n", "<leader>wa", "<cmd>AutoSession toggle<CR>", { desc = "Toggle autosave" })
+		-- keymap.set("n", "<leader>wl", "<cmd>AutoSession search<CR>", { desc = "Session picker" })
+	end,
 }
