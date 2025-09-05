@@ -1,0 +1,92 @@
+function update_system
+    # 1. Merangking mirror untuk koneksi tercepat
+    echo (set_color green)"--> (1/7) Merangking mirror server..."(set_color normal)
+    sudo reflector --verbose --country Indonesia --age 6 --sort rate --save /etc/pacman.d/mirrorlist
+
+    # 2. Menjalankan update sistem penuh
+    echo (set_color green)"--> (2/7) Melakukan update sistem (yay -Syu)..."(set_color normal)
+    yay -Syu --noconfirm
+
+    # 3. Logging upgrade
+    echo (set_color green)"--> (3/7) Menyimpan log upgrade..."(set_color normal)
+    set upgrade_log "$HOME/cachyos-updates-(date +%Y%m%d-%H%M%S).log"
+    awk '/upgraded/ {print $0}' /var/log/pacman.log | tail -n 5 > "$upgrade_log"
+    echo "Log upgrade disimpan di: $upgrade_log"
+
+    # 4. Membersihkan cache paket
+    echo (set_color green)"--> (4/7) Membersihkan cache paket..."(set_color normal)
+    echo "y" | sudo paccache -rk3
+    echo "y" | sudo paccache -ruk0
+
+    # 5. Menghapus paket yatim (orphans) secara interaktif
+    echo (set_color green)"--> (5/7) Memeriksa paket yatim (orphans)..."(set_color normal)
+    set orphans (pacman -Qtdq)
+    if test -n "$orphans"
+        echo "Paket yatim ditemukan:"
+        echo "$orphans"
+        for orphan in $orphans
+            read -n1 -P "Hapus paket yatim '$orphan'? (y/N) " response
+            echo
+            if string match -q -r "[Yy]" -- "$response"
+                sudo pacman -Rns "$orphan" --noconfirm || true
+            else
+                echo "Menyimpan $orphan"
+            end
+        end
+    else
+        echo "Tidak ada paket yatim ditemukan."
+    end
+
+    # 6. Peringatan file .pacnew kritis
+    echo (set_color green)"--> (6/7) Memeriksa file .pacnew kritis..."(set_color normal)
+    set FILES "/etc/group.pacnew" "/etc/shadow.pacnew" "/etc/gshadow.pacnew" "/etc/passwd.pacnew"
+    for file in $FILES
+        if test -f "$file"
+            echo (set_color red)"*** PERHATIAN: Ditemukan file update untuk "(set_color yellow)$file(set_color red)". JANGAN DI-MERGE!!! ***"(set_color normal)
+        end
+    end
+
+    # 7. Cek layanan yang perlu di-restart
+    echo (set_color green)"--> (7/7) Memeriksa layanan yang perlu di-restart..."(set_color normal)
+    sudo checkservices -u
+
+    # Manajemen .pacnew dengan pacdiff dan meld (SUDAH DIPERBAIKI)
+    read -n1 -P "Apakah kamu mau me-review file .pacnew dengan pacdiff? (y/N) " pacdiff_resp
+    echo
+    if string match -q -r "[Yy]" -- "$pacdiff_resp"
+        if command -s meld
+            # Backup DULU sebelum menjalankan pacdiff
+            set files (pacdiff --output)
+            if test -n "$files"
+                set backup_dir "$HOME/pacnew_backups"
+                mkdir -p "$backup_dir"
+                find "$backup_dir" -type f -mtime +7 -delete
+                set timestamp (date +%Y%m%d-%H%M%S)
+                for file in $files
+                    cp "$file" "$backup_dir/"(basename "$file")"-$timestamp"
+                end
+                echo "Backup dibuat di: $backup_dir. Panggil 'restore_pacnew' untuk me-restore."
+            end
+            
+            # Jalankan pacdiff dengan meld (CARA YANG BENAR)
+            echo "Menjalankan pacdiff, gunakan 'v' untuk view dengan meld, 'q' untuk quit..."
+            sudo DIFFPROG=meld pacdiff
+        else
+            echo (set_color red)"Peringatan: 'meld' tidak ditemukan."(set_color normal)
+        end
+    end
+    
+    # Prompt untuk restore backup (SUDAH DIPERBAIKI)
+    if test -d "$HOME/pacnew_backups"; and test -n "(ls -A "$HOME/pacnew_backups")"
+        read -n1 -P "Apakah mau me-restore backup .pacnew/.pacsave sekarang? (y/N) " restore_resp
+        echo
+        if string match -q -r "[Yy]" -- "$restore_resp"
+            restore_pacnew
+        else
+            echo (set_color yellow)"Restore bisa dilakukan nanti dengan perintah: restore_pacnew"(set_color normal)
+        end
+    end
+
+    echo ""
+    echo (set_color cyan)"✅ Proses update dan pembersihan sistem selesai!"(set_color normal)
+end
