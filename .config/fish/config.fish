@@ -53,3 +53,18 @@ end
 # ------------------------------------------------------------------------------
 # Shortcut untuk 'pulang' ke direktori home.
 alias home "cd ~"
+
+# Setting pyenv
+# --- pyenv setup ---
+set -Ux PYENV_ROOT $HOME/.pyenv
+fish_add_path -p $PYENV_ROOT/shims
+fish_add_path $PYENV_ROOT/bin
+
+# init pyenv
+pyenv init - | source
+
+# init pyenv-virtualenv hanya kalau file-nya ada
+if test -e (pyenv root)/plugins/pyenv-virtualenv/etc/pyenv.fish
+    source (pyenv root)/plugins/pyenv-virtualenv/etc/pyenv.fish
+end
+
