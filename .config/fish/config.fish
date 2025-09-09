@@ -1,69 +1,74 @@
-# ------------------------------------------------------------------------------
+# ==============================================================================
 # Konfigurasi Dasar CachyOS
-# ------------------------------------------------------------------------------
-# Memuat konfigurasi dasar dari CachyOS. Sebaiknya selalu di paling atas.
-source /usr/share/cachyos-fish-config/cachyos-config.fish [cite: 1]
+# ==============================================================================
+# Selalu letakkan di paling atas.
+source /usr/share/cachyos-fish-config/cachyos-config.fish  # [cite: 1]
 
-
-# ------------------------------------------------------------------------------
+# ==============================================================================
 # Environment Variables
-# ------------------------------------------------------------------------------
-# Mengatur editor default yang akan digunakan oleh program lain (git, dll).
+# ==============================================================================
+# Editor default untuk program lain (git, dll).
 set -x EDITOR nvim
 
-# Menambahkan path pnpm ke environment variable PATH.
-# `fish_add_path` adalah cara Fish yang paling efisien dan aman (idempotent).
+# Tambahkan path pnpm (idempotent).
 fish_add_path ~/.local/share/pnpm
 
-
-# ------------------------------------------------------------------------------
+# ==============================================================================
 # Inisialisasi Tools
-# ------------------------------------------------------------------------------
+# ==============================================================================
 # Pola `... | source` adalah cara standar yang direkomendasikan developer.
-# Inisialisasi Starship Prompt
-starship init fish | source 
 
-# Inisialisasi Zoxide (navigasi direktori cerdas)
-zoxide init fish | source 
+# Starship Prompt
+starship init fish | source
 
-# Inisialisasi FNM (Fast Node Manager)
-fnm env --use-on-cd | source 
+# Zoxide (navigasi direktori cerdas)
+zoxide init fish | source
 
+# FNM (Fast Node Manager)
+fnm env --use-on-cd | source
 
-# ------------------------------------------------------------------------------
+# ==============================================================================
 # Fungsi Kustom
-# ------------------------------------------------------------------------------
-# Mengosongkan greeting bawaan Fish agar startup lebih bersih.
+# ==============================================================================
+
+# Kosongkan greeting bawaan Fish agar startup bersih.
 function fish_greeting
-    # Dibiarkan kosong dengan sengaja
+    # dibiarkan kosong dengan sengaja
 end
 
-# Fungsi 'y': Buka Yazi, dan pindah direktori terminal setelah keluar.
+# Fungsi `y`:
+# Buka Yazi dan pindahkan direktori terminal ke lokasi terakhir saat Yazi ditutup.
 function y
-	set tmp (mktemp -t "yazi-cwd.XXXXXX")
-	yazi $argv --cwd-file="$tmp"
-	if read -z cwd < "$tmp"; and [ -n "$cwd" ]; and [ "$cwd" != "$PWD" ]
-		builtin cd -- "$cwd"
-	end
-	rm -f -- "$tmp"
+    set tmp (mktemp -t "yazi-cwd.XXXXXX")
+    yazi $argv --cwd-file="$tmp"
+    if read -z cwd < "$tmp"; and test -n "$cwd"; and test "$cwd" != "$PWD"
+        builtin cd -- "$cwd"
+    end
+    rm -f -- "$tmp"
 end
 
-# ------------------------------------------------------------------------------
-# Alias (Shortcut Perintah)
-# ------------------------------------------------------------------------------
-# Shortcut untuk 'pulang' ke direktori home.
+# ==============================================================================
+# Alias
+# ==============================================================================
+
+# Shortcut untuk kembali ke direktori home.
 alias home "cd ~"
 
-# Setting pyenv
-# --- pyenv setup ---
+# ==============================================================================
+# pyenv
+# ==============================================================================
+
+# Root pyenv (user-local)
 set -Ux PYENV_ROOT $HOME/.pyenv
+
+# Pastikan shims ada di depan PATH, lalu bin pyenv.
 fish_add_path -p $PYENV_ROOT/shims
 fish_add_path $PYENV_ROOT/bin
 
-# init pyenv
+# Inisialisasi pyenv
 pyenv init - | source
 
-# init pyenv-virtualenv hanya kalau file-nya ada
+# Inisialisasi pyenv-virtualenv (jika tersedia)
 if test -e (pyenv root)/plugins/pyenv-virtualenv/etc/pyenv.fish
     source (pyenv root)/plugins/pyenv-virtualenv/etc/pyenv.fish
 end
