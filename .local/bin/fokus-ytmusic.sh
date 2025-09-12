@@ -1,13 +1,12 @@
 #!/bin/bash
 
-# --- Konfigurasi (Berdasarkan file .desktop) ---
-APP_WM_CLASS="crx_cinhimbnkkaeohfgghhklpknlkffjgod"
+# --- Konfigurasi ---
+APP_WINDOW_NAME="YouTube Music"
 APP_COMMAND="/opt/brave-bin/brave --profile-directory=Default --app-id=cinhimbnkkaeohfgghhklpknlkffjgod"
 
-# --- Logika kdotool (untuk KDE Plasma) ---
-
-# Cari jendela berdasarkan WM_CLASS.
-WINDOW_ID=$(kdotool search --class "${APP_WM_CLASS}" | head -n 1)
+# --- Logika kdotool (Mencari berdasarkan NAMA JENDELA) ---
+# Kita gunakan --name sesuai hasil tes kita yang berhasil
+WINDOW_ID=$(kdotool search --name "${APP_WINDOW_NAME}" | head -n 1)
 
 # Cek apakah ID ditemukan
 if [ -z "$WINDOW_ID" ]; then
