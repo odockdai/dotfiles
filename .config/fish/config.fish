@@ -73,3 +73,6 @@ if test -e (pyenv root)/plugins/pyenv-virtualenv/etc/pyenv.fish
     source (pyenv root)/plugins/pyenv-virtualenv/etc/pyenv.fish
 end
 
+
+# opencode
+fish_add_path /home/irfan/.opencode/bin
